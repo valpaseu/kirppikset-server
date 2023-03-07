@@ -2,14 +2,15 @@ import express from "express";
 const router = express.Router();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
+import csurf from "csurf";
 import { getDb } from "../db/conn.js";
 import config from "../config.json" assert { type: "json" };
 import { uuid, isUuid } from "uuidv4";
 
 let secretKey = config.JTW_KEY;
+const csrfProtection = csurf({ cookie: true });
 
-router.route("/signup").post(async (req, res) => {
+router.post("/register", csrfProtection, async (req, res) => {
   try {
     const db = getDb("authDB");
 
@@ -36,6 +37,7 @@ router.route("/signup").post(async (req, res) => {
         { Name: "last_name", Value: req.body.last_name },
       ],
     };
+
     await db.collection("users").insertOne(newUser);
 
     // generate JWT token and send response
@@ -47,7 +49,7 @@ router.route("/signup").post(async (req, res) => {
   }
 });
 
-router.route("/login").post(async (req, res) => {
+router.post("/login", csrfProtection, async (req, res) => {
   try {
     // connect to MongoDB
 
@@ -72,7 +74,29 @@ router.route("/login").post(async (req, res) => {
 
     // generate JWT token and send response
     const token = jwt.sign({ email: req.body.email }, secretKey);
-    return res.status(200).json({ token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+    });
+
+    return res.status(200).json({
+      token,
+      user: {
+        email: user.email,
+        id: user.id,
+        UserAttributes: user.UserAttributes,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/logout", csrfProtection, async (req, res) => {
+  try {
+    res.clearCookie("token");
+    return res.status(200).json({ message: "Logged out" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" });
