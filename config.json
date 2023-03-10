@@ -1,6 +1,0 @@
-{
-  "ATLAS_URI": "mongodb+srv://kirppis-admin:k6asYLZwSGUSlhGZ@kirppukset.luhislp.mongodb.net/userDB?retryWrites=true&w=majority",
-  "user_db": "kirppikset",
-  "PORT": 2882,
-  "JTW_KEY": "c3e35c770b05ba201f9b43636849437afa13f92edf037500a2e0d214aaf9e4cf"
-}
